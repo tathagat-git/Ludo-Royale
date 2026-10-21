@@ -1,0 +1,24 @@
+# Render Blueprint - one web service: FastAPI serves the built React app + API + WebSockets.
+services:
+  - type: web
+    name: ludo-royale
+    runtime: python
+    plan: starter            # needed for a persistent disk; "free" works but SQLite resets on every deploy/restart
+    buildCommand: |
+      cd frontend && npm ci && npm run build && cd ..
+      pip install -r backend/requirements.txt
+    startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.3
+      - key: NODE_VERSION
+        value: 20
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        value: sqlite:////var/data/ludo.db
+    disk:
+      name: ludo-data
+      mountPath: /var/data
+      sizeGB: 1
